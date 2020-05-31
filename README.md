@@ -1,2 +1,2 @@
-#### dota2.server  dota2一些地图的服务器
+#### dota2.server  一些dota2地图的服务器
 
