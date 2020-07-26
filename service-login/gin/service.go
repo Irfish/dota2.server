@@ -2,7 +2,7 @@ package gin
 
 import (
 	g "github.com/Irfish/component/gin"
-	"github.com/Irfish/fantasy.server/service-login/base"
+	"github.com/Irfish/dota2.server/service-login/base"
 )
 
 type Gin struct {

@@ -12,9 +12,9 @@ import (
 	"github.com/Irfish/component/log"
 	"github.com/Irfish/component/redis"
 	"github.com/Irfish/component/token"
-	"github.com/Irfish/fantasy.server/pb"
-	"github.com/Irfish/fantasy.server/service-login/orm"
-	"github.com/Irfish/fantasy.server/service-login/server"
+	"github.com/Irfish/dota2.server/pb"
+	"github.com/Irfish/dota2.server/service-login/orm"
+	"github.com/Irfish/dota2.server/service-login/server"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/protobuf/proto"
 )

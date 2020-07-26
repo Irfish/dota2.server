@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Irfish/component/hash"
-	"github.com/Irfish/fantasy.server/service-login/orm"
+	"github.com/Irfish/dota2.server/service-login/orm"
 	"github.com/gin-gonic/gin"
 )
 

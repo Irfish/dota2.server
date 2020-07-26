@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/Irfish/component/etcd3"
 	"github.com/Irfish/component/log"
-	"github.com/Irfish/fantasy.server/pb"
+	"github.com/Irfish/dota2.server/pb"
 )
 
 var service *Server
@@ -13,6 +13,7 @@ func Run() {
 	service.Init()
 }
 
+//etcd3 节点
 type Server struct {
 	*etcd3.ServiceNode
 	GatewayNodes map[string]*etcd3.Node

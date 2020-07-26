@@ -1,6 +1,6 @@
 package main
 
-import "github.com/Irfish/fantasy.server/service-login/service"
+import "github.com/Irfish/dota2.server/service-login/service"
 
 func main() {
 	service.Run()
