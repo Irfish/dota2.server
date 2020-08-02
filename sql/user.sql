@@ -9,6 +9,7 @@ CREATE TABLE `user`(
   `pwd` varchar(1024) NOT NULL,
   `head_url` varchar(1000) NOT NULL,
   `level` int(10) NOT NULL,
+  `steam_id` varchar(100) NOT NULL,
   `create_time` bigint(20) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8;

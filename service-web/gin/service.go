@@ -1,13 +1,12 @@
 package gin
 
-import (
-	g "github.com/Irfish/component/gin"
-)
-
 type Gin struct {
+	Address string
 }
-
+func (p *Gin)Addr() string {
+	return p.Address
+}
 func Run() {
-	server := new(Gin)
-	g.Run(server)
+	//server := new(Gin)
+	//g.Run(server)
 }
