@@ -12,5 +12,10 @@ func (s *Gin) GinPostHandler() map[string]func(*gin.Context) {
 		handler := NewUserRegister()
 		ret["/post/user_register"] = handler.handle
 	}
+	{
+		handler := NewGameStatus()
+		ret["/post/game_status"] = handler.handle
+	}
+
 	return ret
 }
