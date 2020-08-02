@@ -9,31 +9,34 @@ import (
 )
 
 type User struct {
+	CreateTime int64  `xorm:"not null BIGINT(20)"`
+	HeadUrl    string `xorm:"not null VARCHAR(1000)"`
 	Id         int64  `xorm:"pk autoincr BIGINT(20)"`
-	UserName   string `xorm:"not null VARCHAR(50)"`
+	Level      int    `xorm:"not null INT(10)"`
 	Phone      int    `xorm:"not null INT(11)"`
 	Pwd        string `xorm:"not null VARCHAR(1024)"`
-	HeadUrl    string `xorm:"not null VARCHAR(1000)"`
-	Level      int    `xorm:"not null INT(10)"`
-	CreateTime int64  `xorm:"not null BIGINT(20)"`
+	SteamId    string `xorm:"not null VARCHAR(100)"`
+	UserName   string `xorm:"not null VARCHAR(50)"`
 }
 
 func (p *User) Get(column string) interface{} {
 	switch column {
+	case "create_time":
+		return p.CreateTime
+	case "head_url":
+		return p.HeadUrl
 	case "id":
 		return p.Id
-	case "user_name":
-		return p.UserName
+	case "level":
+		return p.Level
 	case "phone":
 		return p.Phone
 	case "pwd":
 		return p.Pwd
-	case "head_url":
-		return p.HeadUrl
-	case "level":
-		return p.Level
-	case "create_time":
-		return p.CreateTime
+	case "steam_id":
+		return p.SteamId
+	case "user_name":
+		return p.UserName
 	}
 	return nil
 }

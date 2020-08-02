@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #mysql 连接地址
-MYSQL_ADDR="root:ABC123456WEQes@tcp(159.138.43.228:3306)/account_db?charset=utf8"
+MYSQL_ADDR="root:123456@tcp(127.0.0.1:3306)/account_db?charset=utf8"
 #xorm 模板路径
 XORM_MODULE_PATH="/D/git/fantacy/server\src/github.com/Irfish/component/xorm/templates"
 
@@ -17,4 +17,4 @@ find $OUT_PATH/orm -type f |xargs -i sed -i s#AAAAAAA#0# {}
 
 #编译go
 cd main
-GOOS=linux GOARCH=amd64 go build -o fantasy-login
+GOOS=linux GOARCH=amd64 go build -o dota2-login
