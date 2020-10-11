@@ -9,34 +9,34 @@ import (
 )
 
 type User struct {
-	CreateTime int64  `xorm:"not null BIGINT(20)"`
-	HeadUrl    string `xorm:"not null VARCHAR(1000)"`
-	Id         int64  `xorm:"pk autoincr BIGINT(20)"`
-	Level      int    `xorm:"not null INT(10)"`
-	Phone      int    `xorm:"not null INT(11)"`
-	Pwd        string `xorm:"not null VARCHAR(1024)"`
-	SteamId    string `xorm:"not null VARCHAR(100)"`
-	UserName   string `xorm:"not null VARCHAR(50)"`
+	Id          int64  `xorm:"pk autoincr BIGINT(10)"`
+	SteamId     string `xorm:"not null VARCHAR(10)"`
+	SteamName   string `xorm:"VARCHAR(20)"`
+	SteamGold   int64  `xorm:"not null BIGINT(10)"`
+	SteamSilver int64  `xorm:"not null BIGINT(10)"`
+	SteamVipExp int64  `xorm:"not null BIGINT(10)"`
+	CreateTime  int64  `xorm:"not null BIGINT(20)"`
+	UpdateTime  int64  `xorm:"not null BIGINT(20)"`
 }
 
 func (p *User) Get(column string) interface{} {
 	switch column {
-	case "create_time":
-		return p.CreateTime
-	case "head_url":
-		return p.HeadUrl
 	case "id":
 		return p.Id
-	case "level":
-		return p.Level
-	case "phone":
-		return p.Phone
-	case "pwd":
-		return p.Pwd
 	case "steam_id":
 		return p.SteamId
-	case "user_name":
-		return p.UserName
+	case "steam_name":
+		return p.SteamName
+	case "steam_gold":
+		return p.SteamGold
+	case "steam_silver":
+		return p.SteamSilver
+	case "steam_vip_exp":
+		return p.SteamVipExp
+	case "create_time":
+		return p.CreateTime
+	case "update_time":
+		return p.UpdateTime
 	}
 	return nil
 }
