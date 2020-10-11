@@ -1,0 +1,75 @@
+package gin
+
+import (
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"strings"
+)
+
+type EnterGame struct {
+
+}
+
+func NewEnterGame() EnterGame {
+	p := EnterGame{}
+	return p
+}
+
+func (p *EnterGame) handle(c *gin.Context) {
+	var e error
+	result := gin.H{}
+	defer func() {
+		if e != nil {
+			result["err"] = e.Error()
+		}
+		c.JSON(http.StatusOK, result)
+	}()
+	steamID := GetStringFromPostForm(c,"steamId")
+	players := GetStringFromPostForm(c,"players")
+	ids := strings.Split(players,",")
+	playerIllegal := true
+	for _,v :=range ids {
+		if v!="0" {
+			exit,_:= GetAndCreate(v)
+			if !exit {
+				playerIllegal = false
+			}
+		}
+	}
+	if playerIllegal {
+		state,gameId:= gameManager.GameCreated()
+		if state {
+			for index:=0;index< len(ids); index++ {
+				steamId:= ids[index]
+				if steamId!="0" {
+					state := gameManager.PlayerEnter(ids[index],gameId,index)
+					if !state {
+						e = fmt.Errorf("player Enter game failed %d",gameId)
+						return
+					}
+				}
+			}
+		}else {
+			e = fmt.Errorf("create game failed")
+			return
+		}
+		game:= gameManager.GetGame(gameId)
+		if game!=nil {
+			p:= gameManager.GetPlayer(gameId,steamID)
+			result["player"] = p
+			result["gameID"] = gameId
+			return
+		}else {
+			e = fmt.Errorf("can not found game with gameid %d",gameId)
+			return
+		}
+	}
+	e = fmt.Errorf("game creat failed ")
+	return
+}
+
+
+
+
+
