@@ -22,4 +22,6 @@ func (p *RankList) handle(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, result)
 	}()
+	players:= gameRankManager.RankList
+	result["rank"] =players
 }

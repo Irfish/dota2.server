@@ -1,6 +1,8 @@
 package gin
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -22,10 +24,14 @@ func (p *GameEnd) handle(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, result)
 	}()
-	steamId := GetStringFromPostForm(c,"steamId")
-	gameId := GetInt64FromPostForm(c,"gameId")
-	score := GetInt64FromPostForm(c,"score")
-	silver := GetInt64FromPostForm(c,"silver")
-	gameManager.GameEnd(gameId,steamId,score,silver)
-	result["player"] = gameManager.GetPlayer(gameId,steamId)
+	gameId := GetStringFromPostForm(c,"gameId")
+	gameEnd := GetStringFromPostForm(c,"gameEnd")
+	var g []GameResult
+	err:= json.Unmarshal([]byte(gameEnd),g)
+	if err!=nil{
+		e = fmt.Errorf(err.Error())
+		return
+	}
+	gameManager.GameEnd(gameId,g)
+	result["state"] = true
 }

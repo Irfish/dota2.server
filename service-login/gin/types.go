@@ -27,7 +27,7 @@ type Player struct {
 	Silver int64
 	VipExp int64
 	SteamId string
-	Items   []int32
+	Items   []Item
 	UseTime int64
 	GameState int
 	Index  int
@@ -35,17 +35,36 @@ type Player struct {
 
 type Game struct {
 	Players map[string]*Player
-	GameID int64
+	GameID string
 	State int
 	CreateTime int64
 }
 
 type GameEndData struct {
 	Steam string
-	GameId int64
+	GameId string
 	Score int
 	Silver int
 }
+
+type GameRank struct {
+	SteamID string
+	Score  int64
+	PlayTime int64
+}
+
+type GameResult struct {
+	SteamId string
+	GameID string
+	Score int64
+	Silver int64
+}
+
+type Item struct {
+	Id int64
+	Count int64
+}
+
 
 
 

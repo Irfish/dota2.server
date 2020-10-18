@@ -22,4 +22,5 @@ func (p *GetLottery) handle(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, result)
 	}()
+
 }

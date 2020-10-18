@@ -86,7 +86,7 @@ func ExportTxtFile() bool  {
 	var cards []orm.CardKey
 	err:= orm.CardKeyXorm().Where("key_state=?",KEY_STATE_NORMAL).Find(&cards)
 	if err!=nil {
-		log.Debug("get card keys err:",err.Error())
+		log.Debug("get card keys err:%s",err.Error())
 		return false
 	}
 	keyMap :=make(map[int64]map[string]bool,0)
@@ -96,6 +96,7 @@ func ExportTxtFile() bool  {
 			keys = make(map[string]bool,0)
 		}
 		keys[v.KeyCode] = true
+		keyMap[v.KeyRmb] = keys
 	}
 	for rmb,keys:=range keyMap{
 		fileName := fmt.Sprintf("card/keys_%d_%d.txt",rmb,time.Now().Unix())
@@ -120,5 +121,6 @@ func SaveFile(keys map[string]bool,fileName string) bool {
 			return false
 		}
 	}
+	log.Debug("saved file : %s",fileName)
 	return true
 }

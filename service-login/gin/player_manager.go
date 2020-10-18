@@ -63,7 +63,7 @@ func NewUser(steamId string)  (bool,orm.User ) {
 	return false,orm.User{}
 }
 
-func GetItems(steamId string) []int32 {
+func GetItems(steamId string) []Item {
 	exit,u := GetUser(steamId)
 	if exit {
 		userID:= u.Id
@@ -73,14 +73,14 @@ func GetItems(steamId string) []int32 {
 			log.Debug("insert user err:%s",err.Error())
 		}
 		if count>0 {
-			items := make([]int32,count)
+			items := make([]Item,count)
 			for i,item := range userBags{
-				items[i] = int32(item.ItemId)
+				items[i] = Item{item.ItemId,item.ItemCount}
 			}
 			return items
 		}
 	}
-	return  []int32{}
+	return  []Item{}
 }
 
 func PlayerBuyItem(steamId string,itemId int64,cost int64,count int64) bool {
@@ -128,24 +128,48 @@ func PlayerBuyItem(steamId string,itemId int64,cost int64,count int64) bool {
 	}
 	//将道具存入背包
 	{
-		userBag:= orm.UserBag{
-					UserId: u.Id,
-					ItemId: itemId,
-					ItemCount: count,
-					ItemState: ITEM_STATE_HAVE,
-					CreateTime: t,
-					UpdateTime: t,
-		}
-
 		s2:= s.Table("user_bag")
-		effect,err:= s2.Insert(&userBag)
+		ub := orm.UserBag{}
+		b, err:= s2.Where("user_id=? and item_id=?",u.Id,itemId).Get(&ub)
 		if err !=nil {
 			e = fmt.Errorf(err.Error())
 			return false
 		}
-		if effect!=1 {
-			e = fmt.Errorf("insert buy itme failed in userbag table")
-			return false
+		if b {
+			if ub.ItemState == ITEM_STATE_HAVE {
+				ub.ItemCount = ub.ItemCount+count
+			}else {
+				ub.ItemState = ITEM_STATE_HAVE
+				ub.ItemCount = count
+			}
+			ub.UpdateTime = t
+			effectNum, err:= s2.Where("user_id=? and item_id=?",u.Id,itemId).Update(&ub)
+			if err !=nil {
+				e = fmt.Errorf(err.Error())
+				return false
+			}
+			if effectNum!=1 {
+				e = fmt.Errorf("update buy itme failed in userbag table")
+				return false
+			}
+		}else {
+			userBag:= orm.UserBag{
+				UserId: u.Id,
+				ItemId: itemId,
+				ItemCount: count,
+				ItemState: ITEM_STATE_HAVE,
+				CreateTime: t,
+				UpdateTime: t,
+			}
+			effect,err:= s2.Insert(&userBag)
+			if err !=nil {
+				e = fmt.Errorf(err.Error())
+				return false
+			}
+			if effect!=1 {
+				e = fmt.Errorf("insert buy itme failed in userbag table")
+				return false
+			}
 		}
 		s.Commit()
 	}

@@ -5,7 +5,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"sync"
 )
+
+var enterGameMutex *sync.RWMutex
 
 type EnterGame struct {
 
@@ -13,6 +16,7 @@ type EnterGame struct {
 
 func NewEnterGame() EnterGame {
 	p := EnterGame{}
+	enterGameMutex = new(sync.RWMutex)
 	return p
 }
 
@@ -24,8 +28,9 @@ func (p *EnterGame) handle(c *gin.Context) {
 			result["err"] = e.Error()
 		}
 		c.JSON(http.StatusOK, result)
+		enterGameMutex.Unlock()
 	}()
-	steamID := GetStringFromPostForm(c,"steamId")
+	enterGameMutex.Lock()
 	players := GetStringFromPostForm(c,"players")
 	ids := strings.Split(players,",")
 	playerIllegal := true
@@ -38,30 +43,39 @@ func (p *EnterGame) handle(c *gin.Context) {
 		}
 	}
 	if playerIllegal {
-		state,gameId:= gameManager.GameCreated()
-		if state {
-			for index:=0;index< len(ids); index++ {
-				steamId:= ids[index]
-				if steamId!="0" {
-					state := gameManager.PlayerEnter(ids[index],gameId,index)
-					if !state {
-						e = fmt.Errorf("player Enter game failed %d",gameId)
-						return
+		steamID := ids[0]
+		inGame,gameId:= gameManager.CheckPlayerInGame(steamID)
+		if !inGame {
+			state,id:= gameManager.GameCreated()
+			if state {
+				gameId = id
+				for index:=0;index< len(ids); index++ {
+					steamId:= ids[index]
+					if steamId!="0" {
+						state := gameManager.PlayerEnter(ids[index],gameId,index)
+						if !state {
+							e = fmt.Errorf("player Enter game failed %d",gameId)
+							return
+						}
 					}
 				}
+			}else {
+				e = fmt.Errorf("create game failed")
+				return
 			}
-		}else {
-			e = fmt.Errorf("create game failed")
-			return
 		}
 		game:= gameManager.GetGame(gameId)
 		if game!=nil {
 			p:= gameManager.GetPlayer(gameId,steamID)
+			if p==nil{
+				e = fmt.Errorf("player not exit steamid= %s",ids[0])
+				return
+			}
 			result["player"] = p
 			result["gameID"] = gameId
 			return
 		}else {
-			e = fmt.Errorf("can not found game with gameid %d",gameId)
+			e = fmt.Errorf("can not found game with gameid %s",gameId)
 			return
 		}
 	}

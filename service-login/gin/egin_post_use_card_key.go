@@ -24,8 +24,7 @@ func (p *UseCardKey) handle(c *gin.Context) {
 		c.JSON(http.StatusOK, result)
 	}()
 	steamID := GetStringFromPostForm(c,"steamId")
-	gameID := GetInt64FromPostForm(c,"gameID")
-
+	gameID := GetStringFromPostForm(c,"gameID")
 	code := GetStringFromPostForm(c,"code")
 	if PlayerUseCardKey(steamID,code) {
 		gameManager.RefreshPlayer(gameID,steamID)

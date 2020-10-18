@@ -16,4 +16,14 @@ func Run() {
 	server := new(Gin)
 	server.Address=base.Server.GinAddr
 	g.Run(server)
+	RedisParserInit()
+	RedisDataLoad()
+}
+
+func RedisParserInit()  {
+	RedisParserGameRankManagerInit()
+}
+
+func RedisDataLoad()  {
+	LoadGameRankManager()
 }

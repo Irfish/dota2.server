@@ -24,7 +24,7 @@ func (p *BuyItem) handle(c *gin.Context) {
 		c.JSON(http.StatusOK, result)
 	}()
 	steamID := GetStringFromPostForm(c,"steamId")
-	gameID := GetInt64FromPostForm(c,"gameID")
+	gameID := GetStringFromPostForm(c,"gameID")
 
 	id := GetInt64FromPostForm(c,"itemId")
 	cost :=GetInt64FromPostForm(c,"cost")
