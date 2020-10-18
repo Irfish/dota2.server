@@ -9,9 +9,9 @@ import (
 )
 
 type LogBuyGoods struct {
-	Id         int64 `xorm:"pk autoincr BIGINT(20)"`
-	UserId     int64 `xorm:"not null BIGINT(20)"`
-	ItemId     int64 `xorm:"not null BIGINT(20)"`
+	Id         int64 `xorm:"pk autoincr BIGINT(10)"`
+	UserId     int64 `xorm:"not null BIGINT(10)"`
+	ItemId     int64 `xorm:"not null BIGINT(10)"`
 	CostMoney  int64 `xorm:"not null BIGINT(10)"`
 	From       int   `xorm:"not null INT(11)"`
 	Count      int64 `xorm:"not null BIGINT(10)"`

@@ -9,9 +9,9 @@ import (
 )
 
 type LogCardKey struct {
-	Id         int64 `xorm:"pk autoincr BIGINT(20)"`
-	CardKeyId  int64 `xorm:"not null BIGINT(20)"`
-	UserId     int64 `xorm:"not null BIGINT(20)"`
+	Id         int64 `xorm:"pk autoincr BIGINT(10)"`
+	CardKeyId  int64 `xorm:"not null BIGINT(10)"`
+	UserId     int64 `xorm:"not null BIGINT(10)"`
 	UseTime    int64 `xorm:"not null BIGINT(10)"`
 	Cost       int64 `xorm:"not null BIGINT(10)"`
 	CreateTime int64 `xorm:"not null BIGINT(20)"`

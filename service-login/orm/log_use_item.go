@@ -9,9 +9,9 @@ import (
 )
 
 type LogUseItem struct {
-	Id           int64 `xorm:"pk autoincr BIGINT(20)"`
-	UserId       int64 `xorm:"not null BIGINT(20)"`
-	ItemId       int64 `xorm:"not null BIGINT(20)"`
+	Id           int64 `xorm:"pk autoincr BIGINT(10)"`
+	UserId       int64 `xorm:"not null BIGINT(10)"`
+	ItemId       int64 `xorm:"not null BIGINT(10)"`
 	ItemUseState int   `xorm:"not null INT(11)"`
 	CreateTime   int64 `xorm:"not null BIGINT(20)"`
 	UpdateTime   int64 `xorm:"not null BIGINT(20)"`
