@@ -3,6 +3,8 @@ package gin
 import (
 	"github.com/Irfish/component/log"
 	"github.com/Irfish/component/redis"
+	"github.com/Irfish/component/str"
+	"math/rand"
 	"sort"
 )
 
@@ -20,7 +22,21 @@ type GameRankManager struct {
 func NewGameRankManager()  *GameRankManager {
 	m := &GameRankManager{}
 	m.RankList = make([]GameRank,0)
+	for i:=0;i<RANK_MAX_NUM;i++ {
+		r:=GameRank{
+			SteamID:str.RandomNumber(8),
+			Score:int64(rand.Intn(1000)),
+			PlayTime: int64(rand.Intn(100)),
+		}
+		m.RankList = append(m.RankList,r)
+	}
+	sort.Sort(m)
 	return m
+}
+
+func (m *GameRankManager)GetList() []GameRank{
+	m.Update([]GameRank{})
+	return m.RankList
 }
 
 func (m *GameRankManager)Update(ranks []GameRank)  {

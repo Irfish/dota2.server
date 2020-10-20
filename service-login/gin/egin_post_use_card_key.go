@@ -26,11 +26,12 @@ func (p *UseCardKey) handle(c *gin.Context) {
 	steamID := GetStringFromPostForm(c,"steamId")
 	gameID := GetStringFromPostForm(c,"gameID")
 	code := GetStringFromPostForm(c,"code")
-	if PlayerUseCardKey(steamID,code) {
+	err:= PlayerUseCardKey(steamID,code)
+	if err==nil  {
 		gameManager.RefreshPlayer(gameID,steamID)
 		p:= gameManager.GetPlayer(gameID,steamID)
 		result["player"] = p
 	}else {
-		e = fmt.Errorf("use card code failed")
+		e = fmt.Errorf(err.Error())
 	}
 }

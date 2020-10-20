@@ -195,25 +195,22 @@ func PlayerUseItem(steamId string,itemId int64,count int64)  {
 
 }
 
-func PlayerUseCardKey(steamId string,code string) bool {
+func PlayerUseCardKey(steamId string,code string) (e error ) {
 	card := orm.CardKey{}
-	exit,err:=orm.CardKeyXorm().Where(fmt.Sprintf("key_code=%s",code)).And("key_state=?",KEY_STATE_NORMAL) .Get(&card)
+	exit,err:=orm.CardKeyXorm().Where("key_code=?",code).And("key_state=?",KEY_STATE_NORMAL) .Get(&card)
 	if err!=nil {
-		log.Debug("do sql get err:%s",err.Error())
-		return false
+		e= fmt.Errorf(err.Error())
 	}
 	if !exit {
-		log.Debug("code(%s)  not exit",code)
-		return false
+		e=fmt.Errorf("code(%s)  not exit",code)
 	}
 	exit, u := GetUser(steamId)
 	if !exit {
-		log.Debug("steamId(%s) not exit",steamId)
-		return false
+		e= fmt.Errorf("steamId(%s) not exit",steamId)
+		return
 	}
 	t := time.Now().Unix()
 
-	var e error
 	s := xorm.Xorm(0).NewSession()
 	defer func() {
 		if e!=nil {
@@ -221,10 +218,11 @@ func PlayerUseCardKey(steamId string,code string) bool {
 			s.Rollback()
 		}
 		s.Close()
+
 	}()
 	if err := s.Begin() ; err != nil {
 		e = fmt.Errorf("fail to session begin")
-		return false
+		return
 	}
 	s1:= s.Table("card_key")
 
@@ -232,14 +230,14 @@ func PlayerUseCardKey(steamId string,code string) bool {
 	{
 		card.KeyState = KEY_STATE_USED
 		card.UpdateTime= t
-		effect,err:= s1.Where(fmt.Sprintf("key_code=%s",code)).Update(&card)
+		effect,err:= s1.Where("key_code=?",code).Update(&card)
 		if err!=nil {
 			e = fmt.Errorf("%s",err.Error())
-			return false
+			return
 		}
 		if effect !=1 {
 			e = fmt.Errorf("update key_code state failed")
-			return false
+			return
 		}
 	}
 	//更新玩家金币
@@ -250,11 +248,11 @@ func PlayerUseCardKey(steamId string,code string) bool {
 		effect,err:= s2.Where("id=?",u.Id).Update(&u)
 		if err!=nil {
 			e = fmt.Errorf("%s",err.Error())
-			return false
+			return
 		}
 		if effect !=1 {
 			e = fmt.Errorf("update steam_gold state failed")
-			return false
+			return
 		}
 	}
 	s.Commit()
@@ -271,15 +269,15 @@ func PlayerUseCardKey(steamId string,code string) bool {
 		effect,err:= orm.LogCardKeyXorm().Insert(&log)
 		if err !=nil {
 			e = fmt.Errorf("%s",err.Error())
-			return false
+			return
 		}
 		if effect !=1 {
 			e = fmt.Errorf("insert  card key log failed")
-			return false
+			return
 		}
 	}
 
-	return true
+	return nil
 }
 
 
