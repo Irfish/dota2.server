@@ -22,6 +22,15 @@ const (
 	ITEM_FROM_REWARD=2
 )
 
+const (
+	ERRORCODE_SERVER_ERR = 1 //服务器异常
+	ERRORCODE_GAME_NOT_EXIT = 2//游戏ID不存在
+	ERRORCODE_PLAYER_NOT_EXIT = 3//玩家不存在
+	ERRORCODE_SILVER_NOT_ENOUGH = 4//银币不足
+	ERRORCODE_GOLD_NOT_ENOUGH = 5//金币不足
+	ERRORCODE_CARD_KEY_USED = 6//卡密无效
+)
+
 type Player struct {
 	Gold int64
 	Silver int64

@@ -143,6 +143,22 @@ func genGameID() string {
 }
 
 
+func CheckGameID(gameId string) (bool,int)  {
+	g:= gameManager.GetGame(gameId)
+	if g==nil{
+		return true, ERRORCODE_GAME_NOT_EXIT
+	}
+	return false,0
+}
+
+func CheckSteamID(gameId string,steamId string) (bool,int)  {
+	p:=gameManager.GetPlayer(gameId,steamId )
+	if p==nil{
+		return true, ERRORCODE_PLAYER_NOT_EXIT
+	}
+	return false,0
+}
+
 
 
 

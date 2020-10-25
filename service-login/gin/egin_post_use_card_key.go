@@ -20,12 +20,29 @@ func (p *UseCardKey) handle(c *gin.Context) {
 	defer func() {
 		if e != nil {
 			result["err"] = e.Error()
+			result["errCode"] = ERRORCODE_SERVER_ERR
 		}
 		c.JSON(http.StatusOK, result)
 	}()
-	steamID := GetStringFromPostForm(c,"steamId")
+
 	gameID := GetStringFromPostForm(c,"gameID")
+	if b,i := CheckGameID(gameID);!b {
+		result["errCode"] = i
+		return
+	}
+
+	steamID := GetStringFromPostForm(c,"steamId")
+	if b,i := CheckSteamID(gameID,steamID);!b {
+		result["errCode"] = i
+		return
+	}
+
 	code := GetStringFromPostForm(c,"code")
+	if b,i := CheckCardKey(code);!b {
+		result["errCode"] = i
+		return
+	}
+
 	err:= PlayerUseCardKey(steamID,code)
 	if err==nil  {
 		gameManager.RefreshPlayer(gameID,steamID)

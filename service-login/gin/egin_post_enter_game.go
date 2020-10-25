@@ -26,6 +26,7 @@ func (p *EnterGame) handle(c *gin.Context) {
 	defer func() {
 		if e != nil {
 			result["err"] = e.Error()
+			result["errCode"] = ERRORCODE_SERVER_ERR
 		}
 		c.JSON(http.StatusOK, result)
 		enterGameMutex.Unlock()
