@@ -16,6 +16,8 @@ type UserBag struct {
 	ItemState  int   `xorm:"not null INT(11)"`
 	CreateTime int64 `xorm:"not null BIGINT(20)"`
 	UpdateTime int64 `xorm:"not null BIGINT(20)"`
+	UseState   int   `xorm:"not null INT(11)"`
+	UseTime    int64 `xorm:"not null BIGINT(20)"`
 }
 
 func (p *UserBag) Get(column string) interface{} {
@@ -34,6 +36,10 @@ func (p *UserBag) Get(column string) interface{} {
 		return p.CreateTime
 	case "update_time":
 		return p.UpdateTime
+	case "use_state":
+		return p.UseState
+	case "use_time":
+		return p.UseTime
 	}
 	return nil
 }
