@@ -14,8 +14,8 @@ var (
 )
 
 const (
-	LOTTERY_TYPE_SLIVER =1
-	LOTTERY_TYPE_GOLD =2
+	LOTTERY_TYPE_SLIVER =1 //银币抽奖
+	LOTTERY_TYPE_GOLD =2 //金币抽奖
 )
 
 const (
@@ -38,7 +38,7 @@ func GetPlayerLotteryCount(steamID string) int {
 		return 0
 	}
 	if r == nil {
-		log.Debug("redis.RedisHget key :%s  is nil", RANK_LIST_REDIS_KEY)
+		log.Debug("redis.RedisHget key :%s  is nil", key)
 		return 0
 	}else {
 		p:= r.(*PlayerLottery)
@@ -142,6 +142,7 @@ func (m *LotteryManager)GetSliverLottery(steamID string) (bool, int) {
 	if !UpdateSilver(steamID,50) {
 		return false,0
 	}
+	m.SilverSeed = SliceOutOfOrder(m.SilverSeed)
 	l :=m.SilverSeed[0]
 	count := GetPlayerLotteryCount(steamID)
 	if count==20 {
@@ -159,16 +160,16 @@ func (m *LotteryManager)GetSliverLottery(steamID string) (bool, int) {
 		itemId = 23
 		break
 	case 3://高级英雄 13,14,15,16,17,18
-		itemId = 17
+		itemId = 15
 		break
 	case 4://高级英雄 13,14,15,16,17,18
 		itemId = 18
 		break
 	case 5://中级英雄 7，8，9，10，11，12
-		itemId = 7
+		itemId = 9
 		break
 	case 6://中级英雄 7，8，9，10，11，12
-		itemId = 8
+		itemId = 10
 		break
 	case 7://vip  200
 		if !UpdateExp(steamID,200) {
@@ -219,6 +220,7 @@ func (m *LotteryManager)GetGoldLottery(steamID string) (bool,int) {
 	if !UpdateGold(steamID,50) {
 		return false,0
 	}
+	m.GoldSeed = SliceOutOfOrder(m.GoldSeed)
 	l :=m.GoldSeed[0]
 	count := GetPlayerLotteryCount(steamID)
 	if count==20 {

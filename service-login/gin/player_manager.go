@@ -26,8 +26,6 @@ func GetAndCreate(id string) (bool,orm.User ) {
 			return false,orm.User{}
 		}
 	}
-	log.Debug("GetAndCreate user failed:")
-	return false,orm.User{}
 }
 
 func GetUser(steamId string)  (bool,orm.User ) {
@@ -63,7 +61,72 @@ func NewUser(steamId string)  (bool,orm.User ) {
 	return false,orm.User{}
 }
 
-func GetItems(steamId string) []Item {
+func CheckItemAndReset(item orm.UserBag) int64 {
+	useType := ITEM_STATE_USED
+	if item.ItemId==25 {
+		useType = ITEM_STATE_USE_10
+	}else if  item.ItemId==26 {
+		useType = ITEM_STATE_USE_30
+	}else {
+		return 0
+	}
+	t :=time.Now().Unix()
+	add:= item.UseState*24*60*60
+	passTime := item.UseTime+ int64(add)
+	leftTime :=  passTime - t
+	if leftTime>0 {
+		return leftTime
+	}
+	var e error
+	s := xorm.Xorm(1).NewSession()
+	defer func() {
+		if e!=nil {
+			log.Debug("%s",e.Error())
+			s.Rollback()
+		}else {
+			s.Commit()
+		}
+		s.Close()
+	}()
+	if err := s.Begin() ; err != nil {
+		e = fmt.Errorf("fail to session begin")
+		return 0
+	}
+	s2:= s.Table("log_use_item")
+	ul := orm.LogUseItem{}
+	b, err:= s2.Where("user_id=? and item_id=? and item_use_state=?",item.UserId,item.ItemId,useType).Get(&ul)
+	if err !=nil {
+		e = fmt.Errorf(err.Error())
+		return 0
+	}
+	if b {
+		{
+			ul2 := orm.LogUseItem{}
+			ul2.ItemUseState = ITEM_STATE_USED
+			_, err:= s2.Where("user_id=? and item_id=? and item_use_state=?",item.UserId,item.ItemId,useType).Update(&ul2)
+			if err !=nil {
+				e = fmt.Errorf(err.Error())
+				return 0
+			}
+		}
+		{
+
+			newItem :=orm.UserBag{}
+			newItem.UseState = ITEM_STATE_USED
+			newItem.UseTime = 0
+			_, err:= orm.UserBagXorm().Where("user_id=? and item_id=?",item.UserId,item.ItemId).Update(&newItem)
+			if err !=nil {
+				e = fmt.Errorf(err.Error())
+				return 0
+			}
+		}
+		return 0
+	}else {
+		return 0
+	}
+}
+
+func GetItems(steamId string) (items []Item,limits []LimitItem ) {
 	exit,u := GetUser(steamId)
 	if exit {
 		userID:= u.Id
@@ -73,14 +136,25 @@ func GetItems(steamId string) []Item {
 			log.Debug("insert user err:%s",err.Error())
 		}
 		if count>0 {
-			items := make([]Item,count)
-			for i,item := range userBags{
-				items[i] = Item{item.ItemId,item.ItemCount}
+			for _,item := range userBags{
+				isLimit := false
+				if item.UseState==ITEM_STATE_USE_10 || item.UseState==ITEM_STATE_USE_30 {
+					leftTime := CheckItemAndReset(item)
+					if leftTime > 0 {
+						limits =append(limits,LimitItem{item.ItemId,item.UseState,item.UseTime,leftTime})
+						if item.ItemCount==0 {
+							isLimit = true
+						}
+					}
+				}
+				if !isLimit {
+					items =append(items,Item{item.ItemId,item.ItemCount})
+				}
 			}
-			return items
+			return
 		}
 	}
-	return  []Item{}
+	return
 }
 
 func PlayerBuyItem(steamId string,itemId int64,cost int64,count int64) bool {
@@ -190,9 +264,105 @@ func PlayerBuyItem(steamId string,itemId int64,cost int64,count int64) bool {
 	return true
 }
 
+func CheckItemExit(steamId string,itemId int64) *orm.UserBag {
+	exit,u := GetUser(steamId)
+	if !exit {
+		log.Debug("user not found")
+		return nil
+	}
+	s2:= orm.UserBagXorm()
+	ub := orm.UserBag{}
+	b, err:= s2.Where("user_id=? and item_id=?",u.Id,itemId).Get(&ub)
+	if err !=nil {
+		log.Debug(err.Error())
+		return nil
+	}
+	if b {
+		if ub.ItemCount>0 {
+			return &ub
+		}
+	}
+	return nil
+}
 
-func PlayerUseItem(steamId string,itemId int64,count int64)  {
+func PlayerUseItem(steamId string,itemId int64,count int64) (bool,int) {
+	useType := ITEM_STATE_USED
+	if itemId==25 {
+		useType = ITEM_STATE_USE_10
+	}else if itemId==26 {
+		useType = ITEM_STATE_USE_30
+	}else {
+		return false,ERRORCODE_ITEM_NOT_EXIT
+	}
+	t:= time.Now().Unix()
+	ub := CheckItemExit(steamId,itemId)
+	if ub ==nil{
+		return false,ERRORCODE_ITEM_NOT_EXIT
+	}
 
+	if left:= CheckItemAndReset(*ub);left>0 {
+		return false,ERRORCODE_ITEM_USED
+	}
+
+	var e error
+	s := xorm.Xorm(1).NewSession()
+	defer func() {
+		if e!=nil {
+			log.Debug("%s",e.Error())
+			s.Rollback()
+		}else {
+			s.Commit()
+		}
+		s.Close()
+	}()
+	if err := s.Begin() ; err != nil {
+		e = fmt.Errorf("fail to session begin")
+		return false,ERRORCODE_SERVER_ERR
+	}
+
+	s2:= s.Table("log_use_item")
+	ul := orm.LogUseItem{}
+	b, err:= s2.Where("user_id=? and item_id=? and item_use_state=?",ub.UserId,itemId,useType).Get(&ul)
+	if err !=nil {
+		e = fmt.Errorf("get:%s ",err.Error())
+		return false,ERRORCODE_SERVER_ERR
+	}
+	if b {
+		return false,ERRORCODE_ITEM_USED
+	}else {
+		logItem := orm.LogUseItem{
+			UserId: ub.UserId,
+			ItemId: itemId,
+			ItemUseState:useType,
+			CreateTime: t,
+		}
+		effect,err:= s2.Insert(&logItem)
+		if err !=nil {
+			e = fmt.Errorf("Insert:%s ",err.Error())
+			return false,ERRORCODE_SERVER_ERR
+		}
+		if effect!=1 {
+			e = fmt.Errorf("insert Update itme failed in userbag table")
+			return false,ERRORCODE_SERVER_ERR
+		}
+	}
+
+	{
+		ub.ItemCount = ub.ItemCount - 1
+		ub.UseState = useType
+		ub.UseTime = t
+		effectNum, err:= orm.UserBagXorm().Where("user_id=? and item_id=?",ub.Id,itemId).Update(ub)
+		if err !=nil {
+			e = fmt.Errorf("Update:%s ",err.Error())
+			return false,ERRORCODE_SERVER_ERR
+		}
+		if effectNum!=1 {
+			e = fmt.Errorf("update buy item failed in userbag table")
+			return false,ERRORCODE_SERVER_ERR
+		}
+	}
+
+	return true,0
 }
 
 func CheckCardKey(code string) (bool,int) {
@@ -340,7 +510,6 @@ func UpdateGold(steamId string,cost int64) bool {
 	}
 	return true
 }
-
 
 func UpdateSilver(steamId string,cost int64) bool {
 	t := time.Now().Unix()

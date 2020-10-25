@@ -48,5 +48,9 @@ func (s *Gin) GinPostHandler() map[string]func(*gin.Context) {
 		handler := NewRankList()
 		ret["/post/rank_list"] = handler.handle
 	}
+	{
+		handler := NewGetLottery()
+		ret["/post/get_lottery"] = handler.handle
+	}
 	return ret
 }

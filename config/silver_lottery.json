@@ -1,0 +1,7 @@
+{
+  "LogLevel": "debug",
+  "LogPath": "",
+  "TCPAddr": "127.0.0.1:2555",
+  "MaxConnNum": 20000,
+  "EtcdAddr":"127.0.0.1:2888"
+}

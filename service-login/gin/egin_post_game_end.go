@@ -31,6 +31,7 @@ func (p *GameEnd) handle(c *gin.Context) {
 		result["errCode"] = i
 		return
 	}
+	gameState := GetInt64FromPostForm(c,"gameState")
 	player := GetStringFromPostForm(c,"player")
 	Score := GetStringFromPostForm(c,"score")
 	Sliver := GetStringFromPostForm(c,"silver")
@@ -60,7 +61,6 @@ func (p *GameEnd) handle(c *gin.Context) {
 			g=append(g,s)
 		}
 	}
-
-	gameManager.GameEnd(gameId,g)
+	gameManager.GameEnd(gameId,g,gameState)
 	result["state"] = true
 }

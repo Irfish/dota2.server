@@ -7,19 +7,23 @@ const (
 )
 
 const (
+	GAME_RESULT_WIN =1
+	GAME_RESULT_LOOSE =2
+)
+
+const (
 	PLAYER_STATE_IDLE =iota
 	PLAYER_STATE_IN_GAME
 )
 
 const (
-	ITEM_STATE_NULL =iota
-	ITEM_STATE_HAVE
+	ITEM_STATE_USED =0
+	ITEM_STATE_HAVE =2
+	ITEM_FROM_BUY =3
+	ITEM_FROM_REWARD=4
+	ITEM_STATE_USE_30 =30
+	ITEM_STATE_USE_10 =10
 
-)
-
-const (
-	ITEM_FROM_BUY =1
-	ITEM_FROM_REWARD=2
 )
 
 const (
@@ -29,6 +33,8 @@ const (
 	ERRORCODE_SILVER_NOT_ENOUGH = 4//银币不足
 	ERRORCODE_GOLD_NOT_ENOUGH = 5//金币不足
 	ERRORCODE_CARD_KEY_USED = 6//卡密无效
+	ERRORCODE_ITEM_NOT_EXIT = 7//道具不存在
+	ERRORCODE_ITEM_USED = 8//体验卡已经被使用
 )
 
 type Player struct {
@@ -37,6 +43,7 @@ type Player struct {
 	VipExp int64
 	SteamId string
 	Items   []Item
+	LimitItems   []LimitItem
 	UseTime int64
 	GameState int
 	Index  int
@@ -72,6 +79,13 @@ type GameResult struct {
 type Item struct {
 	Id int64
 	Count int64
+}
+
+type LimitItem struct {
+	Id int64
+	LimitTime int //时间
+	StartTime int64 //开始使用时间
+	LeftTime  int64 //剩余时间
 }
 
 

@@ -19,11 +19,36 @@ func (p *UseItem) handle(c *gin.Context) {
 	defer func() {
 		if e != nil {
 			result["err"] = e.Error()
+			result["errCode"] = ERRORCODE_SERVER_ERR
 		}
 		c.JSON(http.StatusOK, result)
 	}()
+	gameID := GetStringFromPostForm(c,"gameId")
+	if b,i := CheckGameID(gameID);!b {
+		result["errCode"] = i
+		return
+	}
+
 	steamID := GetStringFromPostForm(c,"steamId")
+	if b,i := CheckSteamID(gameID,steamID);!b {
+		result["errCode"] = i
+		return
+	}
+
 	id := GetInt64FromPostForm(c,"itemId")
 	count :=GetInt64FromPostForm(c,"count")
-	PlayerUseItem(steamID,id, count)
+
+	player:= gameManager.GetPlayer(gameID,steamID)
+	if len(player.LimitItems)>0 {
+		result["errCode"] = ERRORCODE_ITEM_USED
+		return
+	}
+	if b,i:= PlayerUseItem(steamID,id, count);!b {
+		result["errCode"] = i
+		return
+	}
+
+	gameManager.RefreshPlayer(gameID,steamID)
+	player= gameManager.GetPlayer(gameID,steamID)
+	result["player"] = player
 }

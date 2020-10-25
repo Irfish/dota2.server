@@ -64,6 +64,8 @@ func (p *GetLottery) handle(c *gin.Context) {
 		break
 	}
 	result["lotteryId"] =lotteryId
+
+	gameManager.RefreshPlayer(gameID,steamID)
 	player:= gameManager.GetPlayer(gameID,steamID)
 	result["player"] = player
 }

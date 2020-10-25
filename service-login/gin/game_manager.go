@@ -48,13 +48,14 @@ func (m *GameManager)PlayerEnter(steamId ,gameId string,index int) bool {
 	}
 	exit,u :=GetUser(steamId)
 	if exit {
+		items,limitItems:= GetItems(steamId)
 		player.GameState = PLAYER_STATE_IN_GAME
 		player.Silver = u.SteamSilver
 		player.Gold = u.SteamGold
 		player.VipExp = u.SteamVipExp
 		player.Index = index
-		player.UseTime = 5
-		player.Items = GetItems(steamId)
+		player.Items = items
+		player.LimitItems = limitItems
 	}else {
 		return false
 	}
@@ -80,18 +81,21 @@ func (m *GameManager)RefreshPlayer(gameId,steamId string)  {
 	player:= m.GetPlayer(gameId,steamId)
 	if player!=nil {
 		exit,u :=GetUser(steamId)
+		items,limitItems:= GetItems(steamId)
 		if exit {
 			player.GameState = PLAYER_STATE_IN_GAME
 			player.Silver = u.SteamSilver
 			player.Gold = u.SteamGold
 			player.VipExp = u.SteamVipExp
-			player.Items = GetItems(steamId)
+			player.Items = items
+			player.LimitItems = limitItems
 		}
 	}
 }
 
-func (m *GameManager)GameEnd(gameId string,result []GameResult)  {
+func (m *GameManager)GameEnd(gameId string,result []GameResult,gameState int64)  {
 	g:= m.GetGame(gameId)
+	g.State = GAME_STATE_END
 	if g!=nil {
 		t := time.Now().Unix()
 		playTime :=t-g.CreateTime
@@ -100,8 +104,11 @@ func (m *GameManager)GameEnd(gameId string,result []GameResult)  {
 			m.gameEndLog(gameId,v.SteamId,v.Score,v.Silver,playTime,t)
 			gameRanks = append(gameRanks,GameRank{	v.SteamId,v.Score,playTime})
 		}
-		gameRankManager.Update(gameRanks)
+		if gameState==GAME_RESULT_WIN {
+			gameRankManager.Update(gameRanks)
+		}
 	}
+	delete(m.Games,g.GameID)
 }
 
 func (m *GameManager)gameEndLog(gameId , steamId string, score ,silver,playTime,t int64)  {
@@ -132,8 +139,6 @@ func (m *GameManager)gameEndLog(gameId , steamId string, score ,silver,playTime,
 			log.Debug("%s",err.Error())
 			return
 		}
-		g.State = GAME_STATE_END
-		delete(m.Games,g.GameID)
 	}
 }
 
@@ -142,10 +147,9 @@ func genGameID() string {
 	return  str.RandomString(6)
 }
 
-
 func CheckGameID(gameId string) (bool,int)  {
 	g:= gameManager.GetGame(gameId)
-	if g==nil{
+	if g!=nil{
 		return true, ERRORCODE_GAME_NOT_EXIT
 	}
 	return false,0
@@ -153,7 +157,7 @@ func CheckGameID(gameId string) (bool,int)  {
 
 func CheckSteamID(gameId string,steamId string) (bool,int)  {
 	p:=gameManager.GetPlayer(gameId,steamId )
-	if p==nil{
+	if p!=nil{
 		return true, ERRORCODE_PLAYER_NOT_EXIT
 	}
 	return false,0
