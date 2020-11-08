@@ -23,42 +23,64 @@ const (
 )
 
 type PlayerLottery struct {
-	Count int
+	CountGold int
+	CountSilver int
+	Id int64
 }
 
-func GetPlayerLotteryKey(steamId string) string {
-	return fmt.Sprintf("%s_%s", PLAYER_LOTTERY_COUNT_REDIS_KEY,steamId)
+func GetPlayerLotteryKey(steamID string) string {
+	p:= gameManager.GetUser(steamID)
+	if p!=nil {
+		return fmt.Sprintf("%s_%d", PLAYER_LOTTERY_COUNT_REDIS_KEY,p.ID)
+	}
+	return ""
 }
 
-func GetPlayerLotteryCount(steamID string) int {
+func GetPlayerLotteryCount(steamID string) *PlayerLottery {
 	key := GetPlayerLotteryKey(steamID)
+	if key=="" {
+		return &PlayerLottery{CountSilver: 0,CountGold: 0}
+	}
 	r, err := redis.RedisHget(key, "count")
 	if err != nil {
 		log.Debug(err.Error())
-		return 0
+		return &PlayerLottery{CountSilver: 0,CountGold: 0}
 	}
 	if r == nil {
 		log.Debug("redis.RedisHget key :%s  is nil", key)
-		return 0
+		return &PlayerLottery{CountSilver: 0,CountGold: 0}
 	}else {
 		p:= r.(*PlayerLottery)
-		return p.Count
+		return p
 	}
-	return 0
+	return &PlayerLottery{CountSilver: 0,CountGold: 0}
 }
 
-func UpdatePlayerLotteryCount(steamID string,reset bool)  {
-	count := GetPlayerLotteryCount(steamID)
-	playerLottery := &PlayerLottery{
-		Count:count+1,
+func UpdatePlayerLotteryCount(lotteryType int, steamID string,reset bool)  {
+	p := GetPlayerLotteryCount(steamID)
+	if p==nil {
+		return
 	}
-	if reset {
-		playerLottery.Count =0
+
+	if lotteryType==LOTTERY_TYPE_GOLD {
+		if reset {
+			p.CountGold = 1
+		}else {
+			p.CountGold = p.CountGold+1
+		}
+	}else {
+		if reset {
+			p.CountSilver = 1
+		}else {
+			p.CountSilver = p.CountSilver+1
+		}
 	}
 	key := GetPlayerLotteryKey(steamID)
-	_, e1 := redis.RedisHset(key, "info", playerLottery)
-	if e1 != nil {
-		log.Debug(e1.Error())
+	if key!="" {
+		_, e1 := redis.RedisHset(key, "count", p)
+		if e1 != nil {
+			log.Debug(e1.Error())
+		}
 	}
 }
 
@@ -138,13 +160,19 @@ func NewLottery()  *LotteryManager {
 	return l
 }
 
-func (m *LotteryManager)GetSliverLottery(steamID string) (bool, int) {
-	if !UpdateSilver(steamID,50) {
-		return false,0
+func (m *LotteryManager)GetGoldLottery(steamID string) (bool, int,int) {
+	if !UpdateGold(steamID,50) {
+		return false,0,0
 	}
+
 	m.SilverSeed = SliceOutOfOrder(m.SilverSeed)
 	l :=m.SilverSeed[0]
-	count := GetPlayerLotteryCount(steamID)
+	p := GetPlayerLotteryCount(steamID)
+	count := 0
+	if p!=nil {
+		count =p.CountGold
+	}
+	count= count+1
 	if count==20 {
 		l =0
 	}
@@ -173,59 +201,61 @@ func (m *LotteryManager)GetSliverLottery(steamID string) (bool, int) {
 		break
 	case 7://vip  200
 		if !UpdateExp(steamID,200) {
-			return false,0
+			return false,0,0
 		}
 		break
 	case 8://vip  300
 		if !UpdateExp(steamID,300) {
-			return false,0
+			return false,0,0
 		}
 		break
 	case 9://vip  400
 		if !UpdateExp(steamID,400) {
-			return false,0
+			return false,0,0
 		}
 		break
 	case 10://vip  500
 		if !UpdateExp(steamID,500) {
-			return false,0
+			return false,0,0
 		}
 		break
 	case 11://vip  600
 		if !UpdateExp(steamID,600) {
-			return false,0
+			return false,0,0
 		}
 		break
 	case 12://银币  300
 		if !UpdateSilver(steamID,-300) {
-			return false,0
+			return false,0,0
 		}
 		break
 	case 13://银币  500
 		if !UpdateSilver(steamID,-500) {
-			return false,0
+			return false,0,0
 		}
 		break
 	}
 	if itemId!=0 {
 		if !UpdateItem(steamID,itemId,1) {
-			return false,0
+			return false,0,0
 		}
 	}
-	UpdatePlayerLotteryCount(steamID,false)
-	return true,l
+	UpdatePlayerLotteryCount(LOTTERY_TYPE_GOLD,steamID,count==20)
+	return true,l,count
 }
 
-func (m *LotteryManager)GetGoldLottery(steamID string) (bool,int) {
-	if !UpdateGold(steamID,50) {
-		return false,0
+func (m *LotteryManager)GetSilverLottery(steamID string) (bool,int,int) {
+	if !UpdateSilver(steamID,50) {
+		return false,0,0
 	}
 	m.GoldSeed = SliceOutOfOrder(m.GoldSeed)
 	l :=m.GoldSeed[0]
-	count := GetPlayerLotteryCount(steamID)
-	if count==20 {
-		l =0
+	p := GetPlayerLotteryCount(steamID)
+	count := 0
+	if p!=nil {
+		count =p.CountSilver
 	}
+	count= count+1
 	itemId := int64(0)
 	switch l {
 	case 0://
@@ -257,35 +287,35 @@ func (m *LotteryManager)GetGoldLottery(steamID string) (bool,int) {
 		break
 	case 9://vip  50
 		if !UpdateExp(steamID,50) {
-			return false,0
+			return false,0,0
 		}
 		break
 	case 10://vip  75
 		if !UpdateExp(steamID,75) {
-			return false,0
+			return false,0,0
 		}
 		break
 	case 11://vip  100
 		if !UpdateExp(steamID,100) {
-			return false,0
+			return false,0,0
 		}
 		break
 	case 12://vip  125
 		if !UpdateExp(steamID,125) {
-			return false,0
+			return false,0,0
 		}
 		break
 	case 13://vip  150
 		if !UpdateExp(steamID,150) {
-			return false,0
+			return false,0,0
 		}
 		break
 	}
 	if itemId!=0 {
 		if !UpdateItem(steamID,itemId,1) {
-			return false,0
+			return false,0,0
 		}
 	}
-	UpdatePlayerLotteryCount(steamID,false)
-	return true,l
+	UpdatePlayerLotteryCount(LOTTERY_TYPE_SLIVER,steamID,count==20)
+	return true,l,count
 }

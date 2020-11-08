@@ -12,5 +12,12 @@ func (s *Gin) GinGetHandler() map[string]func(*gin.Context) {
 		handler := NewGenCardKey()
 		ret["/get/gen_card_key"] = handler.handle
 	}
+
+	{
+		handler := NewEinGetClearAllDB()
+		ret["/get/clear_all_db"] = handler.handle
+	}
+
+
 	return ret
 }

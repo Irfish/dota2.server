@@ -56,6 +56,7 @@ func (m *GameManager)PlayerEnter(steamId ,gameId string,index int) bool {
 		player.Index = index
 		player.Items = items
 		player.LimitItems = limitItems
+		player.ID = u.Id
 	}else {
 		return false
 	}
@@ -77,6 +78,17 @@ func (m *GameManager)GetPlayer(gameId string,steamId string) *Player {
 	return nil
 }
 
+func (m *GameManager)GetUser(steamId string) *Player {
+	for _,g:=range m.Games {
+		for _,p:=range g.Players {
+			if p.SteamId == steamId {
+				return p
+			}
+		}
+	}
+	return nil
+}
+
 func (m *GameManager)RefreshPlayer(gameId,steamId string)  {
 	player:= m.GetPlayer(gameId,steamId)
 	if player!=nil {
@@ -89,6 +101,7 @@ func (m *GameManager)RefreshPlayer(gameId,steamId string)  {
 			player.VipExp = u.SteamVipExp
 			player.Items = items
 			player.LimitItems = limitItems
+			player.ID = u.Id
 		}
 	}
 }
@@ -144,7 +157,7 @@ func (m *GameManager)gameEndLog(gameId , steamId string, score ,silver,playTime,
 
 //生成游戏ID
 func genGameID() string {
-	return  str.RandomString(6)
+	return  str.RandomStringWithBigChar(10)
 }
 
 func CheckGameID(gameId string) (bool,int)  {

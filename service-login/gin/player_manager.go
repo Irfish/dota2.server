@@ -103,7 +103,7 @@ func CheckItemAndReset(item orm.UserBag) int64 {
 		{
 			ul2 := orm.LogUseItem{}
 			ul2.ItemUseState = ITEM_STATE_USED
-			_, err:= s2.Where("user_id=? and item_id=? and item_use_state=?",item.UserId,item.ItemId,useType).Update(&ul2)
+			_, err:= s2.Where("user_id=? and item_id=? and item_use_state=?",item.UserId,item.ItemId,useType).Cols("item_use_state").Update(&ul2)
 			if err !=nil {
 				e = fmt.Errorf(err.Error())
 				return 0
@@ -114,7 +114,7 @@ func CheckItemAndReset(item orm.UserBag) int64 {
 			newItem :=orm.UserBag{}
 			newItem.UseState = ITEM_STATE_USED
 			newItem.UseTime = 0
-			_, err:= orm.UserBagXorm().Where("user_id=? and item_id=?",item.UserId,item.ItemId).Update(&newItem)
+			_, err:= orm.UserBagXorm().Where("user_id=? and item_id=?",item.UserId,item.ItemId).Cols("use_state","use_time").Update(&newItem)
 			if err !=nil {
 				e = fmt.Errorf(err.Error())
 				return 0
@@ -190,7 +190,7 @@ func PlayerBuyItem(steamId string,itemId int64,cost int64,count int64) bool {
 	//更新玩家金币
 	{
 		s1:= s.Table("user")
-		effect,err:= s1.ID(u.Id).Update(&user)
+		effect,err:= s1.ID(u.Id).Cols("steam_name","update_time").Update(&user)
 		if err !=nil {
 			e = fmt.Errorf(err.Error())
 			return false
@@ -348,10 +348,12 @@ func PlayerUseItem(steamId string,itemId int64,count int64) (bool,int) {
 	}
 
 	{
-		ub.ItemCount = ub.ItemCount - 1
-		ub.UseState = useType
-		ub.UseTime = t
-		effectNum, err:= orm.UserBagXorm().Where("user_id=? and item_id=?",ub.Id,itemId).Update(ub)
+		newUb:= orm.UserBag{}
+		newUb.ItemCount =ub.ItemCount - 1
+		newUb.UseState = useType
+		newUb.UseTime = t
+		newUb.UpdateTime =t
+		effectNum, err:= orm.UserBagXorm().Where("user_id=? and item_id=?",ub.UserId,itemId).Cols("item_count","use_state","update_time","use_time").Update(&newUb)
 		if err !=nil {
 			e = fmt.Errorf("Update:%s ",err.Error())
 			return false,ERRORCODE_SERVER_ERR
@@ -498,7 +500,7 @@ func UpdateGold(steamId string,cost int64) bool {
 	//更新玩家金币
 	{
 		s1:= s.Table("user")
-		effect,err:= s1.ID(u.Id).Update(&user)
+		effect,err:= s1.ID(u.Id).Cols("steam_gold","update_time").Update(&user)
 		if err !=nil {
 			e = fmt.Errorf(err.Error())
 			return false
@@ -546,7 +548,7 @@ func UpdateSilver(steamId string,cost int64) bool {
 	//更新玩家金币
 	{
 		s1:= s.Table("user")
-		effect,err:= s1.ID(u.Id).Update(&user)
+		effect,err:= s1.ID(u.Id).Cols("steam_silver","update_time").Update(&user)
 		if err !=nil {
 			e = fmt.Errorf(err.Error())
 			return false

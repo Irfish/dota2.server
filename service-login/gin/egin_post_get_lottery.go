@@ -37,14 +37,16 @@ func (p *GetLottery) handle(c *gin.Context) {
 
 	lotteryType := GetInt64FromPostForm(c,"lotteryType")
 	lotteryId := 0
+	lotteryCount :=0
 	switch lotteryType {
 	case LOTTERY_TYPE_SLIVER:
 		if b,i := CheckSilver(steamID,50);!b {
 			result["errCode"] = i
 			return
 		}
-		if b, id := lotteryManager.GetSliverLottery(steamID);b {
+		if b, id, c := lotteryManager.GetSilverLottery(steamID);b {
 			lotteryId = id
+			lotteryCount=c
 		}else {
 			result["errCode"] = ERRORCODE_SERVER_ERR
 			return
@@ -55,8 +57,9 @@ func (p *GetLottery) handle(c *gin.Context) {
 			result["errCode"] = i
 			return
 		}
-		if b, id := lotteryManager.GetGoldLottery(steamID);b {
+		if b, id,c := lotteryManager.GetGoldLottery(steamID);b {
 			lotteryId = id
+			lotteryCount=c
 		}else {
 			result["errCode"] = ERRORCODE_SERVER_ERR
 			return
@@ -64,7 +67,7 @@ func (p *GetLottery) handle(c *gin.Context) {
 		break
 	}
 	result["lotteryId"] =lotteryId
-
+	result["lotteryCount"] =lotteryCount
 	gameManager.RefreshPlayer(gameID,steamID)
 	player:= gameManager.GetPlayer(gameID,steamID)
 	result["player"] = player

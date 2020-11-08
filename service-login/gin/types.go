@@ -47,6 +47,7 @@ type Player struct {
 	UseTime int64
 	GameState int
 	Index  int
+	ID int64
 }
 
 type Game struct {
