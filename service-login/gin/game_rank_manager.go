@@ -40,9 +40,22 @@ func (m *GameRankManager)GetList() []GameRank{
 }
 
 func (m *GameRankManager)Update(ranks []GameRank)  {
-	log.Debug("GameRankManager: before %d  Add %d ", len(m.RankList), len(ranks))
 	m.RankList = append(m.RankList,ranks...)
-	log.Debug("GameRankManager: after %s ", len(m.RankList))
+	list := make(map[string]GameRank,0)
+	for _,r:=range m.RankList {
+		s,b:= list[r.SteamID]
+		if !b {
+			list[r.SteamID] = r
+		}else {
+			if s.PlayTime>r.PlayTime || (s.PlayTime==r.PlayTime && s.Score<r.Score){
+				list[r.SteamID] =r
+			}
+		}
+	}
+	m.RankList = make([]GameRank,0)
+	for _,r:=range list {
+		m.RankList = append(m.RankList,r)
+	}
 	sort.Sort(m)
 	len:=m.Len()
 	if len> RANK_MAX_NUM {

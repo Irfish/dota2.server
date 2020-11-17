@@ -106,15 +106,33 @@ func (m *GameManager)RefreshPlayer(gameId,steamId string)  {
 	}
 }
 
-func (m *GameManager)GameEnd(gameId string,result []GameResult,gameState int64)  {
+func GetExpByLevel(level int64) int64 {
+	switch level {
+	case 1:
+		return 10
+	case 2:
+		return 20
+	case 3:
+		return 30
+	case 4:
+		return 40
+	}
+	return 0
+}
+
+func (m *GameManager)GameEnd(gameId string,result []GameResult,gameState,gameLevel int64)  {
 	g:= m.GetGame(gameId)
 	g.State = GAME_STATE_END
 	if g!=nil {
 		t := time.Now().Unix()
 		playTime :=t-g.CreateTime
 		gameRanks := make([]GameRank,0)
+		exp:= GetExpByLevel(gameLevel)
+		if gameState!=GAME_RESULT_WIN {
+			exp = 0
+		}
 		for _,v:=range result {
-			m.gameEndLog(gameId,v.SteamId,v.Score,v.Silver,playTime,t)
+			m.gameEndLog(gameId,v.SteamId,v.Score,v.Silver,playTime,t,exp)
 			gameRanks = append(gameRanks,GameRank{	v.SteamId,v.Score,playTime})
 		}
 		if gameState==GAME_RESULT_WIN {
@@ -124,16 +142,17 @@ func (m *GameManager)GameEnd(gameId string,result []GameResult,gameState int64) 
 	delete(m.Games,g.GameID)
 }
 
-func (m *GameManager)gameEndLog(gameId , steamId string, score ,silver,playTime,t int64)  {
+func (m *GameManager)gameEndLog(gameId , steamId string, score ,silver,playTime,t,exp int64)  {
 	exit,u :=GetUser(steamId)
 	if !exit {
 		return
 	}
 	g:= m.GetGame(gameId)
 	if g!=nil {
-		u.SteamSilver = u.SteamSilver+ silver
+		u.SteamSilver = u.SteamSilver + silver
 		u.UpdateTime = t
-		_,err:= orm.UserXorm().Where("steam_id=?",steamId).Update(&u)
+		u.SteamVipExp = u.SteamVipExp + exp
+		_,err:= orm.UserXorm().Where("steam_id=?",steamId).Cols("steam_silver","steam_vip_exp","update_time").Update(&u)
 		if err!=nil {
 			log.Debug("%s",err.Error())
 			return

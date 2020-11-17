@@ -416,7 +416,7 @@ func PlayerUseCardKey(steamId string,code string) (e error ) {
 	{
 		card.KeyState = KEY_STATE_USED
 		card.UpdateTime= t
-		effect,err:= s1.Where("key_code=?",code).Update(&card)
+		effect,err:= s1.Where("key_code=?",code).Cols("key_state","update_time").Update(&card)
 		if err!=nil {
 			e = fmt.Errorf("%s",err.Error())
 			return
@@ -431,7 +431,8 @@ func PlayerUseCardKey(steamId string,code string) (e error ) {
 		s2:= s.Table("user")
 		u.UpdateTime = t
 		u.SteamGold = u.SteamGold+card.KeyValue
-		effect,err:= s2.Where("id=?",u.Id).Update(&u)
+		u.SteamVipExp = u.SteamVipExp + card.KeyValue
+		effect,err:= s2.Where("id=?",u.Id).Cols("steam_gold","steam_vip_exp","update_time").Update(&u)
 		if err!=nil {
 			e = fmt.Errorf("%s",err.Error())
 			return
