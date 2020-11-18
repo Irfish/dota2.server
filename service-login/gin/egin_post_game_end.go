@@ -62,6 +62,6 @@ func (p *GameEnd) handle(c *gin.Context) {
 			g=append(g,s)
 		}
 	}
-	gameManager.GameEnd(gameId,g,gameState,gameLevel)
+	gameManager.GameEnd(gameId,g,gameState,int(gameLevel))
 	result["state"] = true
 }

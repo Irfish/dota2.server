@@ -10,7 +10,7 @@ import (
 func RedisParserGameRankManagerInit() {
 	redis.AppendRedisMarshal(func(keys []string, i1 interface{}) (i interface{}, b bool) {
 		if keys[0] == "hset" && keys[1] == RANK_LIST_REDIS_KEY && keys[2] == "info" {
-			i0, ok := i1.(*GameRankManager)
+			i0, ok := i1.(*GameRankManagers)
 			if ok {
 				i2, e := json.Marshal(i0)
 				if e != nil {
@@ -27,7 +27,7 @@ func RedisParserGameRankManagerInit() {
 		if keys[0] == "hget" && keys[1] == RANK_LIST_REDIS_KEY && keys[2] == "info" {
 			i0, ok := i1.([]byte)
 			if ok {
-				gameRank := &GameRankManager{}
+				gameRank := &GameRankManagers{}
 				e := json.Unmarshal(i0, gameRank)
 				if e != nil {
 					log.Debug("RedisParserInit AppendRedisUnmarshal GameRankManager error:", e.Error())

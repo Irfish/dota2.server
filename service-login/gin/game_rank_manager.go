@@ -8,12 +8,43 @@ import (
 	"sort"
 )
 
-var gameRankManager = NewGameRankManager()
+var gameRankManagers = NewGameRankManagers()
 
 const (
 	RANK_MAX_NUM = 20
 	RANK_LIST_REDIS_KEY = "service.login.gameRankManager"
 )
+
+type GameRankManagers struct {
+	GameLevelToRankList map[int]*GameRankManager
+}
+
+func NewGameRankManagers()  *GameRankManagers {
+	m := &GameRankManagers{}
+	m.GameLevelToRankList = make(map[int]*GameRankManager,0)
+	m.GameLevelToRankList[1] = NewGameRankManager()
+	m.GameLevelToRankList[2] = NewGameRankManager()
+	m.GameLevelToRankList[3] = NewGameRankManager()
+	m.GameLevelToRankList[4] = NewGameRankManager()
+	return m
+}
+
+func (m *GameRankManagers)Update(gameLevel int,ranks []GameRank )  {
+	l := m.GameLevelToRankList[gameLevel]
+	l.Update(ranks)
+	_, e1 := redis.RedisHset(RANK_LIST_REDIS_KEY, "info", gameRankManagers)
+	if e1 != nil {
+		log.Debug(e1.Error())
+	}
+}
+
+func (m *GameRankManagers)GetList() map[int]*GameRankManager {
+	m.Update(1,[]GameRank{})
+	m.Update(2,[]GameRank{})
+	m.Update(3,[]GameRank{})
+	m.Update(4,[]GameRank{})
+	return m.GameLevelToRankList
+}
 
 type GameRankManager struct {
 	RankList  []GameRank
@@ -26,7 +57,7 @@ func NewGameRankManager()  *GameRankManager {
 		r:=GameRank{
 			SteamID:str.RandomNumber(8),
 			Score:int64(rand.Intn(1000)),
-			PlayTime: int64(rand.Intn(100)),
+			PlayTime: 99999999 + int64(rand.Intn(1000)),
 		}
 		m.RankList = append(m.RankList,r)
 	}
@@ -60,10 +91,6 @@ func (m *GameRankManager)Update(ranks []GameRank)  {
 	len:=m.Len()
 	if len> RANK_MAX_NUM {
 		m.RankList = m.RankList[:len-RANK_MAX_NUM-1]
-	}
-	_, e1 := redis.RedisHset(RANK_LIST_REDIS_KEY, "info", gameRankManager)
-	if e1 != nil {
-		log.Debug(e1.Error())
 	}
 }
 
@@ -99,10 +126,10 @@ func LoadGameRankManager()  {
 	}
 	if r == nil {
 		log.Debug("redis.RedisHget key :%s  is nil",RANK_LIST_REDIS_KEY)
-		gameRankManager = NewGameRankManager()
+		gameRankManagers = NewGameRankManagers()
 	}else {
-		info := r.(*GameRankManager)
-		gameRankManager = info
+		info := r.(*GameRankManagers)
+		gameRankManagers = info
 	}
 }
 

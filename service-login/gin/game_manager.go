@@ -106,7 +106,7 @@ func (m *GameManager)RefreshPlayer(gameId,steamId string)  {
 	}
 }
 
-func GetExpByLevel(level int64) int64 {
+func GetExpByLevel(level int) int64 {
 	switch level {
 	case 1:
 		return 10
@@ -120,7 +120,7 @@ func GetExpByLevel(level int64) int64 {
 	return 0
 }
 
-func (m *GameManager)GameEnd(gameId string,result []GameResult,gameState,gameLevel int64)  {
+func (m *GameManager)GameEnd(gameId string,result []GameResult,gameState int64,gameLevel int)  {
 	g:= m.GetGame(gameId)
 	g.State = GAME_STATE_END
 	if g!=nil {
@@ -136,7 +136,7 @@ func (m *GameManager)GameEnd(gameId string,result []GameResult,gameState,gameLev
 			gameRanks = append(gameRanks,GameRank{	v.SteamId,v.Score,playTime})
 		}
 		if gameState==GAME_RESULT_WIN {
-			gameRankManager.Update(gameRanks)
+			gameRankManagers.Update(gameLevel,gameRanks)
 		}
 	}
 	delete(m.Games,g.GameID)

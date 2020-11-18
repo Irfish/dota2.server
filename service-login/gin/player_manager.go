@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/Irfish/component/log"
 	"github.com/Irfish/component/xorm"
+	//"github.com/Irfish/component/uuid"
 	"github.com/Irfish/dota2.server/service-login/orm"
+
 	"time"
 )
 
@@ -190,7 +192,7 @@ func PlayerBuyItem(steamId string,itemId int64,cost int64,count int64) bool {
 	//更新玩家金币
 	{
 		s1:= s.Table("user")
-		effect,err:= s1.ID(u.Id).Cols("steam_name","update_time").Update(&user)
+		effect,err:= s1.ID(u.Id).Cols("steam_gold","update_time").Update(&user)
 		if err !=nil {
 			e = fmt.Errorf(err.Error())
 			return false
@@ -656,6 +658,7 @@ func UpdateItem(steamId string, itemId int64, count int64) bool {
 				return false
 			}
 		}else {
+			//uid:= uuid.GenUid()
 			userBag:= orm.UserBag{
 				UserId: u.Id,
 				ItemId: itemId,

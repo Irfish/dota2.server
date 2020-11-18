@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Irfish/component/log"
 	"github.com/Irfish/component/redis"
+	"github.com/Irfish/dota2.server/service-login/base"
 	"math/rand"
 	"time"
 )
@@ -64,13 +65,13 @@ func UpdatePlayerLotteryCount(lotteryType int, steamID string,reset bool)  {
 
 	if lotteryType==LOTTERY_TYPE_GOLD {
 		if reset {
-			p.CountGold = 1
+			p.CountGold = 0
 		}else {
 			p.CountGold = p.CountGold+1
 		}
 	}else {
 		if reset {
-			p.CountSilver = 1
+			p.CountSilver = 0
 		}else {
 			p.CountSilver = p.CountSilver+1
 		}
@@ -107,25 +108,10 @@ type LotteryManager struct {
 func NewLottery()  *LotteryManager {
 	l := &LotteryManager{}
 	{
-		var silverConfig [14]LotteryConfig
-		silverConfig[0] = LotteryConfig{0,0,0}
-		silverConfig[1] = LotteryConfig{1,1,50}
-		silverConfig[2] = LotteryConfig{2,2,50}
-		silverConfig[3] = LotteryConfig{3,3,25}
-		silverConfig[4] = LotteryConfig{4,4,25}
-		silverConfig[5] = LotteryConfig{5,5,50}
-		silverConfig[6] = LotteryConfig{6,6,50}
-		silverConfig[7] = LotteryConfig{7,7,150}
-		silverConfig[8] = LotteryConfig{8,8,125}
-		silverConfig[9] = LotteryConfig{9,9,100}
-		silverConfig[10] = LotteryConfig{10,10,75}
-		silverConfig[11] = LotteryConfig{11,11,50}
-		silverConfig[12] = LotteryConfig{12,12,150}
-		silverConfig[13] = LotteryConfig{13,13,100}
-
+		silverConfig :=  base.SilverLotteryConfig
 		l.SilverSeed =make([]int,0)
 		for i:=1;i<14;i++ {
-			for j:=0;j<silverConfig[i].Rate;j++ {
+			for j:=0;j<silverConfig[i].Rate*10;j++ {
 				l.SilverSeed = append(l.SilverSeed,silverConfig[i].Type)
 			}
 		}
@@ -133,25 +119,10 @@ func NewLottery()  *LotteryManager {
 	}
 
 	{
-		var goldConfig [14]LotteryConfig
-		goldConfig[0] = LotteryConfig{0,0,0}
-		goldConfig[1] = LotteryConfig{1,1,20}
-		goldConfig[2] = LotteryConfig{2,2,20}
-		goldConfig[3] = LotteryConfig{3,3,85}
-		goldConfig[4] = LotteryConfig{4,4,85}
-		goldConfig[5] = LotteryConfig{5,5,85}
-		goldConfig[6] = LotteryConfig{6,6,85}
-		goldConfig[7] = LotteryConfig{7,7,85}
-		goldConfig[8] = LotteryConfig{8,8,85}
-		goldConfig[9] = LotteryConfig{9,9,140}
-		goldConfig[10] = LotteryConfig{10,10,130}
-		goldConfig[11] = LotteryConfig{11,11,80}
-		goldConfig[12] = LotteryConfig{12,12,60}
-		goldConfig[13] = LotteryConfig{13,13,40}
-
+		goldConfig :=  base.GoldLotteryConfig
 		l.GoldSeed =make([]int,0)
 		for i:=1;i<14;i++ {
-			for j:=0;j<goldConfig[i].Rate;j++ {
+			for j:=0;j<goldConfig[i].Rate*10;j++ {
 				l.GoldSeed = append(l.GoldSeed,goldConfig[i].Type)
 			}
 		}
@@ -165,8 +136,8 @@ func (m *LotteryManager)GetGoldLottery(steamID string) (bool, int,int) {
 		return false,0,0
 	}
 
-	m.SilverSeed = SliceOutOfOrder(m.SilverSeed)
-	l :=m.SilverSeed[0]
+	m.GoldSeed = SliceOutOfOrder(m.GoldSeed)
+	l :=m.GoldSeed[0]
 	p := GetPlayerLotteryCount(steamID)
 	count := 0
 	if p!=nil {
@@ -248,14 +219,17 @@ func (m *LotteryManager)GetSilverLottery(steamID string) (bool,int,int) {
 	if !UpdateSilver(steamID,50) {
 		return false,0,0
 	}
-	m.GoldSeed = SliceOutOfOrder(m.GoldSeed)
-	l :=m.GoldSeed[0]
+	m.SilverSeed = SliceOutOfOrder(m.SilverSeed)
+	l :=m.SilverSeed[0]
 	p := GetPlayerLotteryCount(steamID)
 	count := 0
 	if p!=nil {
 		count =p.CountSilver
 	}
 	count= count+1
+	if count==20 {
+		l =0
+	}
 	itemId := int64(0)
 	switch l {
 	case 0://

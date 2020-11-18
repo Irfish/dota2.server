@@ -1,6 +1,7 @@
 package gin
 
 import (
+	"github.com/Irfish/component/log"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -21,6 +22,7 @@ func (p *GetLottery) handle(c *gin.Context) {
 			result["err"] = e.Error()
 			result["errCode"] = ERRORCODE_SERVER_ERR
 		}
+		log.Debug("result: %v",result)
 		c.JSON(http.StatusOK, result)
 	}()
 	gameID := GetStringFromPostForm(c,"gameId")
