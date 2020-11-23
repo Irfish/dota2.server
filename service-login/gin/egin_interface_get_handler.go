@@ -14,10 +14,14 @@ func (s *Gin) GinGetHandler() map[string]func(*gin.Context) {
 	}
 
 	{
-		handler := NewEinGetClearAllDB()
-		ret["/get/clear_all_db"] = handler.handle
+	//	handler := NewEinGetClearAllDB()
+	//	ret["/get/clear_all_db"] = handler.handle
 	}
 
+	{
+		handler := NewEginGetReloadBlackList()
+		ret["/get/reload_black_list"] = handler.handle
+	}
 
 	return ret
 }

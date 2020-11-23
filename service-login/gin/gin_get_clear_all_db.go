@@ -2,6 +2,7 @@ package gin
 
 import (
 	"fmt"
+	"github.com/Irfish/dota2.server/service-login/base"
 	"github.com/Irfish/dota2.server/service-login/orm"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -24,7 +25,9 @@ func (p *EinGetClearAllDB) handle(c *gin.Context) {
 		}
 		c.JSON(http.StatusOK, result)
 	}()
-
+	if base.Server.LogLevel!="debug" {
+		return
+	}
 	{
 		users := orm.NewUsers(0)
 		err:= orm.UserXorm().Cols("id").Find(&users)
@@ -72,5 +75,5 @@ func (p *EinGetClearAllDB) handle(c *gin.Context) {
 			orm.LogBuyGoodsXorm().Where("id=?",m.Id).Delete(m)
 		}
 	}
-
+	gameManager.Games = make(map[string]*Game,0)
 }

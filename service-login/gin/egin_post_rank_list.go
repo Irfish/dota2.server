@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+
 type RankList struct {
 }
 

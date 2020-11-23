@@ -21,7 +21,7 @@ func Run() {
 }
 
 func RedisParserInit()  {
-	RedisParserGameRankManagerInit()
+	//RedisParserGameRankManagerInit()
 	RedisParserPlayerLotteryInit()
 }
 

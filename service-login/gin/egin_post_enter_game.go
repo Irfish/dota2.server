@@ -45,26 +45,27 @@ func (p *EnterGame) handle(c *gin.Context) {
 	}
 	if playerIllegal {
 		steamID := ids[0]
-		inGame,gameId:= gameManager.CheckPlayerInGame(steamID)
-		if !inGame {
-			state,id:= gameManager.GameCreated()
-			if state {
-				gameId = id
-				for index:=0;index< len(ids); index++ {
-					steamId:= ids[index]
-					if steamId!="0" {
-						state := gameManager.PlayerEnter(ids[index],gameId,index)
-						if !state {
-							e = fmt.Errorf("player Enter game failed %d",gameId)
-							return
-						}
+		//inGame,gameId:= gameManager.CheckPlayerInGame(steamID)
+		//if !inGame {
+		//
+		//}
+		state,gameId:= gameManager.GameCreated()
+		if state {
+			for index:=0;index< len(ids); index++ {
+				steamId:= ids[index]
+				if steamId!="0" {
+					state := gameManager.PlayerEnter(ids[index],gameId,index)
+					if !state {
+						e = fmt.Errorf("player Enter game failed %d",gameId)
+						return
 					}
 				}
-			}else {
-				e = fmt.Errorf("create game failed")
-				return
 			}
+		}else {
+			e = fmt.Errorf("create game failed")
+			return
 		}
+
 		game:= gameManager.GetGame(gameId)
 		if game!=nil {
 			p:= gameManager.GetPlayer(gameId,steamID)
