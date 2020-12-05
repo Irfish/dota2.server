@@ -106,18 +106,28 @@ func (m *GameManager)RefreshPlayer(gameId,steamId string)  {
 	}
 }
 
-func GetExpByLevel(level int) int64 {
-	switch level {
-	case 1:
-		return 10
-	case 2:
-		return 20
-	case 3:
-		return 30
-	case 4:
-		return 40
+func GetRankLimitTime(level int) int64 {
+	LoadConfigRankLimit()
+	if len(rankLimit)>=level {
+		return  rankLimit[level-1].Time
 	}
 	return 0
+}
+
+func GetExpByLevel(level int) (int64,int64) {
+	exp := int64(0)
+	limitTime :=GetRankLimitTime(level)
+	switch level {
+	case 1:
+		exp = 10
+	case 2:
+		exp = 20
+	case 3:
+		exp = 30
+	case 4:
+		exp = 40
+	}
+	return exp,limitTime
 }
 
 func (m *GameManager)GameEnd(gameId string,result []GameResult,gameState int64,gameLevel int)  {
@@ -127,16 +137,19 @@ func (m *GameManager)GameEnd(gameId string,result []GameResult,gameState int64,g
 		t := time.Now().Unix()
 		playTime :=t-g.CreateTime
 		gameRanks := make([]GameRank,0)
-		exp:= GetExpByLevel(gameLevel)
-		if gameState!=GAME_RESULT_WIN {
-			exp = 0
-		}
-		for _,v:=range result {
-			m.gameEndLog(gameId,v.SteamId,v.Score,v.Silver,playTime,t,exp)
-			gameRanks = append(gameRanks,GameRank{	v.SteamId,v.Score,playTime})
-		}
-		if gameState==GAME_RESULT_WIN {
-			gameRankManagers.Update(gameLevel,gameRanks)
+		exp,realTime:= GetExpByLevel(gameLevel)
+		log.Debug("realTime:%d",realTime)
+		if playTime>=realTime*60 {
+			if gameState!=GAME_RESULT_WIN {
+				exp = 0
+			}
+			for _,v:=range result {
+				m.gameEndLog(gameId,v.SteamId,v.Score,v.Silver,playTime,t,exp)
+				gameRanks = append(gameRanks,GameRank{	v.SteamId,v.Score,playTime})
+			}
+			if gameState==GAME_RESULT_WIN {
+				gameRankManagers.Update(gameLevel,gameRanks)
+			}
 		}
 	}
 	delete(m.Games,g.GameID)

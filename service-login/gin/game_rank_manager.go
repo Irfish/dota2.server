@@ -3,8 +3,6 @@ package gin
 import (
 	"github.com/Irfish/component/log"
 	"github.com/Irfish/component/redis"
-	"github.com/Irfish/component/str"
-	"math/rand"
 	"sort"
 )
 
@@ -30,6 +28,8 @@ func NewGameRankManagers()  *GameRankManagers {
 }
 
 func (m *GameRankManagers)Update(gameLevel int,ranks []GameRank )  {
+	LoadConfigBlackUserList()
+	log.Debug("GameRankManagers:Update %d %v",gameLevel,ranks)
 	l := m.GameLevelToRankList[gameLevel]
 	l.Update(ranks)
 	_, e1 := redis.RedisHset(RANK_LIST_REDIS_KEY, "info", gameRankManagers)
@@ -39,10 +39,6 @@ func (m *GameRankManagers)Update(gameLevel int,ranks []GameRank )  {
 }
 
 func (m *GameRankManagers)GetList() map[int]*GameRankManager {
-	m.Update(1,[]GameRank{})
-	m.Update(2,[]GameRank{})
-	m.Update(3,[]GameRank{})
-	m.Update(4,[]GameRank{})
 	return m.GameLevelToRankList
 }
 
@@ -53,15 +49,6 @@ type GameRankManager struct {
 func NewGameRankManager()  *GameRankManager {
 	m := &GameRankManager{}
 	m.RankList = make([]GameRank,0)
-	for i:=0;i<RANK_MAX_NUM;i++ {
-		r:=GameRank{
-			SteamID:str.RandomNumber(8),
-			Score:int64(rand.Intn(1000)),
-			PlayTime: 99999999 + int64(rand.Intn(1000)),
-		}
-		m.RankList = append(m.RankList,r)
-	}
-	sort.Sort(m)
 	return m
 }
 
@@ -71,15 +58,25 @@ func (m *GameRankManager)GetList() []GameRank{
 }
 
 func (m *GameRankManager)Update(ranks []GameRank)  {
+	log.Debug("GameRankManagers:Update before %v",m.RankList)
 	m.RankList = append(m.RankList,ranks...)
 	list := make(map[string]GameRank,0)
 	for _,r:=range m.RankList {
-		s,b:= list[r.SteamID]
-		if !b {
-			list[r.SteamID] = r
-		}else {
-			if s.PlayTime>r.PlayTime || (s.PlayTime==r.PlayTime && s.Score<r.Score){
-				list[r.SteamID] =r
+		isBlack :=false
+		for _,black:=range blackUserList{
+			if r.SteamID ==black.SteamId {
+				isBlack =true
+				break
+			}
+		}
+		if !isBlack {
+			s,b:= list[r.SteamID]
+			if !b {
+				list[r.SteamID] = r
+			}else {
+				if s.PlayTime>r.PlayTime || (s.PlayTime==r.PlayTime && s.Score<r.Score){
+					list[r.SteamID] =r
+				}
 			}
 		}
 	}
@@ -88,10 +85,11 @@ func (m *GameRankManager)Update(ranks []GameRank)  {
 		m.RankList = append(m.RankList,r)
 	}
 	sort.Sort(m)
-	len:=m.Len()
-	if len> RANK_MAX_NUM {
+	len:= m.Len()
+	if len > RANK_MAX_NUM {
 		m.RankList = m.RankList[:len-RANK_MAX_NUM-1]
 	}
+	log.Debug("GameRankManagers:Update after %v",m.RankList)
 }
 
 func (m *GameRankManager) GetRankedSteamIds() []string {

@@ -159,17 +159,25 @@ func GetItems(steamId string) (items []Item,limits []LimitItem ) {
 	return
 }
 
-func PlayerBuyItem(steamId string,itemId int64,cost int64,count int64) bool {
+func PlayerBuyItem(steamId string,itemId int64,cost int64,count int64,costType int64) bool {
 	t := time.Now().Unix()
 	exit,u := GetUser(steamId)
 	if !exit {
 		log.Debug("user not found")
 		return false
 	}
-	if u.SteamGold < cost {
-		log.Debug("gold not enough")
-		return false
+	if costType==BUY_ITEM_BY_GOLD {
+		if u.SteamGold < cost {
+			log.Debug("gold not enough")
+			return false
+		}
+	}else {
+		if u.SteamSilver < cost {
+			log.Debug("silver not enough")
+			return false
+		}
 	}
+
 	var e error
 	s := xorm.Xorm(0).NewSession()
 	defer func() {
@@ -184,15 +192,22 @@ func PlayerBuyItem(steamId string,itemId int64,cost int64,count int64) bool {
 		return false
 	}
 
-	momey := u.SteamGold-cost
 	user:= orm.User{
-		SteamGold:momey,
 		UpdateTime: t,
 	}
+	cols :=[]string{"update_time"}
+	if costType==BUY_ITEM_BY_GOLD {
+		user.SteamGold=u.SteamGold-cost
+		cols = append(cols,"steam_gold")
+	}else {
+		user.SteamSilver=u.SteamSilver-cost
+		cols = append(cols,"steam_silver")
+	}
+
 	//更新玩家金币
 	{
 		s1:= s.Table("user")
-		effect,err:= s1.ID(u.Id).Cols("steam_gold","update_time").Update(&user)
+		effect,err:= s1.ID(u.Id).Cols(cols...).Update(&user)
 		if err !=nil {
 			e = fmt.Errorf(err.Error())
 			return false
@@ -256,7 +271,11 @@ func PlayerBuyItem(steamId string,itemId int64,cost int64,count int64) bool {
 			UpdateTime: t,
 			ItemId: itemId,
 			UserId: u.Id,
-			ItemUseState:ITEM_FROM_BUY,
+		}
+		if costType ==BUY_ITEM_BY_GOLD {
+			logUseItem.ItemUseState = ITEM_FROM_BUY_BY_GOLD
+		}else {
+			logUseItem.ItemUseState = ITEM_FROM_BUY_BY_SILVER
 		}
 		_,err:=orm.LogUseItemXorm().Insert(&logUseItem)
 		if err !=nil {

@@ -27,8 +27,8 @@ func (p *GameEnd) handle(c *gin.Context) {
 		c.JSON(http.StatusOK, result)
 	}()
 	gameId := GetStringFromPostForm(c,"gameId")
-	if b,i := CheckGameID(gameId);!b {
-		result["errCode"] = i
+	if b,_ := CheckGameID(gameId);!b {
+		result["state"] = true
 		return
 	}
 	gameState := GetInt64FromPostForm(c,"gameState")

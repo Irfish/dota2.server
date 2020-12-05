@@ -43,9 +43,15 @@ func (p *BuyItem) handle(c *gin.Context) {
 		return
 	}
 
+	sostType :=GetInt64FromPostForm(c,"costType")
+	if b,i := CheckGold(steamID,cost);!b {
+		result["errCode"] = i
+		return
+	}
+
 	id := GetInt64FromPostForm(c,"itemId")
 	count :=GetInt64FromPostForm(c,"count")
-	if PlayerBuyItem(steamID,id,cost,count) {
+	if PlayerBuyItem(steamID,id,cost,count,sostType) {
 		gameManager.RefreshPlayer(gameID,steamID)
 		p:= gameManager.GetPlayer(gameID,steamID)
 		result["player"] = p

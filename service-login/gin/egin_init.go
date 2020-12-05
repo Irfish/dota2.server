@@ -11,7 +11,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var blackList []string
+var blackList []BlackIPList
+var blackUserList []BlackUserList
+var rankLimit []RankTimeLimit
+
+type BlackIPList struct {
+	Ip string
+}
+
+type BlackUserList struct {
+	SteamId string
+}
+
+type RankTimeLimit struct {
+	Time int64
+}
+
 
 func init()  {
 	LoadBlackList()
@@ -20,12 +35,40 @@ func init()  {
 func LoadBlackList()  {
 	data, err := ioutil.ReadFile("config/black_list.json")
 	if err != nil {
-		log.Fatal("%v", err)
+		log.Debug(err.Error())
+		return
 	}
 	err = json.Unmarshal(data, &blackList)
 	if err != nil {
 		log.Fatal("%v", err)
 	}
+	log.Debug("blackList:%v",blackList)
+}
+
+func LoadConfigRankLimit()  {
+	d, err := ioutil.ReadFile("config/rank_limit.json")
+	if err != nil {
+		log.Debug(err.Error())
+		return
+	}
+	err = json.Unmarshal(d, &rankLimit)
+	if err != nil {
+		log.Fatal("%v", err)
+	}
+	log.Debug("data:%v",rankLimit)
+}
+
+func LoadConfigBlackUserList()  {
+	d, err := ioutil.ReadFile("config/black_user_list.json")
+	if err != nil {
+		log.Debug(err.Error())
+		return
+	}
+	err = json.Unmarshal(d, &blackUserList)
+	if err != nil {
+		log.Fatal("%v", err)
+	}
+	log.Debug("data:%v",blackUserList)
 }
 
 func GetIP(addr string) int64 {
@@ -55,7 +98,7 @@ func (s *Gin) GinInit(egin *gin.Engine) {
 			}()
 			isBlack :=false
 			for _,v:=range  blackList {
-				if v==context.ClientIP() {
+				if v.Ip==context.ClientIP() {
 					isBlack =true
 				}
 			}
@@ -70,7 +113,7 @@ func (s *Gin) GinInit(egin *gin.Engine) {
 			}
 			k := context.GetHeader("Server-Key")
 			if k=="" {
-				e = fmt.Errorf("Server-Key is nil")
+				//e = fmt.Errorf("Server-Key is nil")
 				return
 			}
 		},
