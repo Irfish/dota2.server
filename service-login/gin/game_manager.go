@@ -139,14 +139,14 @@ func (m *GameManager)GameEnd(gameId string,result []GameResult,gameState int64,g
 		gameRanks := make([]GameRank,0)
 		exp,realTime:= GetExpByLevel(gameLevel)
 		log.Debug("realTime:%d",realTime)
+		if gameState!=GAME_RESULT_WIN {
+			exp = 0
+		}
+		for _,v:=range result {
+			m.gameEndLog(gameId,v.SteamId,v.Score,v.Silver,playTime,t,exp)
+			gameRanks = append(gameRanks,GameRank{	v.SteamId,v.Score,playTime})
+		}
 		if playTime>=realTime*60 {
-			if gameState!=GAME_RESULT_WIN {
-				exp = 0
-			}
-			for _,v:=range result {
-				m.gameEndLog(gameId,v.SteamId,v.Score,v.Silver,playTime,t,exp)
-				gameRanks = append(gameRanks,GameRank{	v.SteamId,v.Score,playTime})
-			}
 			if gameState==GAME_RESULT_WIN {
 				gameRankManagers.Update(gameLevel,gameRanks)
 			}

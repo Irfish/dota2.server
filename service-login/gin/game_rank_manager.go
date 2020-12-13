@@ -29,9 +29,8 @@ func NewGameRankManagers()  *GameRankManagers {
 
 func (m *GameRankManagers)Update(gameLevel int,ranks []GameRank )  {
 	LoadConfigBlackUserList()
-	log.Debug("GameRankManagers:Update %d %v",gameLevel,ranks)
 	l := m.GameLevelToRankList[gameLevel]
-	l.Update(ranks)
+	l.Update(gameLevel,ranks)
 	_, e1 := redis.RedisHset(RANK_LIST_REDIS_KEY, "info", gameRankManagers)
 	if e1 != nil {
 		log.Debug(e1.Error())
@@ -52,15 +51,11 @@ func NewGameRankManager()  *GameRankManager {
 	return m
 }
 
-func (m *GameRankManager)GetList() []GameRank{
-	m.Update([]GameRank{})
-	return m.RankList
-}
-
-func (m *GameRankManager)Update(ranks []GameRank)  {
+func (m *GameRankManager)Update(gameLevel int, ranks []GameRank)  {
 	log.Debug("GameRankManagers:Update before %v",m.RankList)
 	m.RankList = append(m.RankList,ranks...)
 	list := make(map[string]GameRank,0)
+	limitTime :=GetRankLimitTime(gameLevel)
 	for _,r:=range m.RankList {
 		isBlack :=false
 		for _,black:=range blackUserList{
@@ -68,6 +63,9 @@ func (m *GameRankManager)Update(ranks []GameRank)  {
 				isBlack =true
 				break
 			}
+		}
+		if r.PlayTime < limitTime*60 {
+			isBlack = true
 		}
 		if !isBlack {
 			s,b:= list[r.SteamID]
@@ -128,6 +126,10 @@ func LoadGameRankManager()  {
 	}else {
 		info := r.(*GameRankManagers)
 		gameRankManagers = info
+		gameRankManagers.Update(1,[]GameRank{})
+		gameRankManagers.Update(2,[]GameRank{})
+		gameRankManagers.Update(3,[]GameRank{})
+		gameRankManagers.Update(4,[]GameRank{})
 	}
 }
 
